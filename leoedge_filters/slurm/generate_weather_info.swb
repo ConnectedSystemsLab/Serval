@@ -1,0 +1,23 @@
+#!/bin/bash
+#SBATCH --job-name=weather    # Job name
+#SBATCH --mail-type=END,FAIL          # Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=yutao4@illinois.edu     # Where to send mail
+#SBATCH --time=4:00:00             # Time limit hrs:min:sec
+#SBATCH --output=logs/weather_%A   # Standard output and error log
+#SBATCH --partition=secondary,ncsa,eng-research-gpu
+#SBATCH --mem=64G
+#SBATCH --cpus-per-task=1
+pwd
+hostname
+date
+
+module load anaconda/2022-May/3
+source activate torch
+cd /home/yutao4/leoedge_filters || exit 255
+
+PYTHONPATH="/home/yutao4/leoedge_filters" python preprocessing/generate_weather_info.py \
+    --output_file results/weather_info.pkl $@
+
+exit_code=$?
+date
+exit $exit_code

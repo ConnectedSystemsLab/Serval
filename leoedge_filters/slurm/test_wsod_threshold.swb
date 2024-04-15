@@ -1,0 +1,25 @@
+#!/bin/bash
+#SBATCH --job-name=test_wsod_threshold    # Job name
+#SBATCH --mail-type=END,FAIL          # Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=yutao4@illinois.edu     # Where to send mail
+#SBATCH --time=4:00:00             # Time limit hrs:min:sec
+#SBATCH --output=logs/generate_filter_%A_%a   # Standard output and error log
+#SBATCH --partition=secondary,eng-research-gpu,ncsa
+#SBATCH --mem=64G
+#SBATCH --gpus 1
+#SBATCH --cpus-per-task=10
+#SBATCH --array=0-4
+pwd
+hostname
+date
+
+thresholds=(0.5 0.6 0.7 0.8 0.9)
+threshold=${thresholds[$SLURM_ARRAY_TASK_ID]}
+
+module load anaconda/2022-May/3
+source activate torch
+cd /home/yutao4/leoedge_filters || exit 255
+PYTHONPATH="/home/yutao4/leoedge_filters" python experiments/generate_boxes_on_planet.py --save_marked_image --images data/test_wsod_image \
+--threshold $threshold --output results/test_wsod_threshold_$threshold --weight results/model/ship_classifier_augmented.pth
+
+date

@@ -1,0 +1,24 @@
+#!/bin/bash
+#SBATCH --job-name=generate_yolo    # Job name
+#SBATCH --mail-type=END,FAIL          # Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=yutao4@illinois.edu     # Where to send mail
+#SBATCH --time=4:00:00             # Time limit hrs:min:sec
+#SBATCH --output=logs/generate_yolo_%A_%a.log   # Standard output and error log
+#SBATCH --partition=secondary
+#SBATCH --mem=32G
+#SBATCH --cpus-per-task=5
+#SBATCH --array=0-299
+#SBATCH --gpus 1
+pwd
+hostname
+date
+
+module load anaconda/2022-May/3
+source activate torch
+cd /home/yutao4/leoedge_filters || exit 255
+PYTHONPATH="/home/yutao4/leoedge_filters" python experiments/generate_boxes_on_planet.py \
+ --job_array_index $SLURM_ARRAY_TASK_ID --job_array_size 300 \
+ --images data/yolo_training_images --weight results/model/ship_classifier_augmented.pth \
+ --threshold 0.9 --device cpu
+
+date

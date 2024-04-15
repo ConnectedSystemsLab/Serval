@@ -1,0 +1,13 @@
+cd /home/yutao4/leoedge_filters || exit 255
+
+if [[-n $1]]; then
+    jid0="--dependency=afterok:$1"
+else
+    jid0=""
+fi
+
+jid1=$(sbatch --parsable --dependency=afterok:$jid0 slurm/forest_historical_data.swb)
+jid2=$(sbatch --parsable --dependency=afterok:$jid0 slurm/generate_weather_info.swb)
+jid3=$(sbatch --parsable --dependency=afterok:$jid1 slurm/generate_forest_results.swb)
+jid4=$(sbatch --parsable --dependency=afterok:$jid2:$jid3 slurm/combine_and_inject.swb)
+echo $jid4

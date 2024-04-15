@@ -1,0 +1,26 @@
+#!/bin/bash
+#SBATCH --job-name=generate_cloud_data    # Job name
+#SBATCH --mail-type=END,FAIL          # Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=yutao4@illinois.edu     # Where to send mail
+#SBATCH --time=2-00:00:00             # Time limit hrs:min:sec
+#SBATCH --output=logs/generate_cloud_%A_%a.log   # Standard output and error log
+#SBATCH --partition=eng-research-gpu
+#SBATCH --gpus 2
+#SBATCH --mem=100G
+#SBATCH --cpus-per-task=40
+pwd
+hostname
+date
+
+module load anaconda/2022-May/3
+source activate torch
+cd /home/yutao4/leoedge_filters || exit 255
+PYTHONPATH="/home/yutao4/leoedge_filters" python image_classifier/train.py --backbone cnn\
+ --cfg "[[256,256,4],[[64,4,5,2],[256,4,5,2],[1024,4,5,2],[1024,2,3,1]],[],2]" \
+ --train_dir data/cloud_training_data_split/train\
+    --val_dir data/cloud_training_data_split/val\
+    --lr 0.0001\
+    --model_name cloud_classifier\
+    --dataset cloud
+
+date

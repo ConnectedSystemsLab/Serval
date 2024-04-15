@@ -1,0 +1,27 @@
+#!/bin/bash
+#SBATCH --job-name=generate_forest_result    # Job name
+#SBATCH --mail-type=END,FAIL          # Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=yutao4@illinois.edu     # Where to send mail
+#SBATCH --time=4:00:00             # Time limit hrs:min:sec
+#SBATCH --output=logs/generate_forest_%A_%a   # Standard output and error log
+#SBATCH --partition=secondary,ncsa,eng-research-gpu
+#SBATCH --mem=32G
+#SBATCH --cpus-per-task=12
+#SBATCH --array=0-99
+pwd
+hostname
+date
+
+module load anaconda/2022-May/3
+source activate torch
+cd /home/yutao4/leoedge_filters || exit 255
+
+mkdir -p results/filter_results/forest
+PYTHONPATH="/home/yutao4/leoedge_filters" python preprocessing/generate_forest_result.py\
+ --job_id $SLURM_ARRAY_TASK_ID --num_jobs 100\
+   --output_folder results/filter_results/forest\
+   --historical_data_file results/forest_historical_data.pkl $@
+
+exit_code=$?
+date
+exit $exit_code

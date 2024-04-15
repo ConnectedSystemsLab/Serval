@@ -1,0 +1,37 @@
+#!/bin/bash
+#SBATCH --job-name=combine_and_inject    # Job name
+#SBATCH --mail-type=END,FAIL          # Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=yutao4@illinois.edu     # Where to send mail
+#SBATCH --time=4:00:00             # Time limit hrs:min:sec
+#SBATCH --output=logs/combine_and_inject_%A_%a   # Standard output and error log
+#SBATCH --partition=secondary,ncsa,eng-research,cs
+#SBATCH --mem=64G
+#SBATCH --cpus-per-task=8
+
+pwd
+hostname
+date
+
+module load anaconda/2022-May/3
+source activate torch
+cd /home/yutao4/leoedge_filters || exit 255
+
+rm -rf results/filter_results.pkl
+
+PYTHONPATH="/home/yutao4/leoedge_filters" python preprocessing/combine_filter_array_result.py\
+    --apps "forest" "fire" "cloud" "forest_model" "forest_map" \
+    --results-dir "results/filter_results/"\
+    --output "results/filter_results.pkl"
+
+rm -rf results/filtered_images.pkl
+
+PYTHONPATH="/home/yutao4/leoedge_filters" python experiments/inject_filter_result_into_image.py\
+ --image_file data/ca_20day/metadata_full.pkl\
+  --filter_result_file results/filter_results.pkl\
+   --output_file results/filtered_images.pkl\
+    --log_file logs/inject_filter_result_into_image.log \
+    --weather_info_file "results/weather_info.pkl"
+
+
+cp results/filtered_images.pkl /home/yutao4/Sat_Simulator/data/filtered_images.pkl
+date

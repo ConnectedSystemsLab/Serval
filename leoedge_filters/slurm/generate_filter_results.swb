@@ -1,0 +1,25 @@
+#!/bin/bash
+#SBATCH --job-name=generate_filter_result    # Job name
+#SBATCH --mail-type=END,FAIL          # Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=yutao4@illinois.edu     # Where to send mail
+#SBATCH --time=4:00:00             # Time limit hrs:min:sec
+#SBATCH --output=logs/generate_filter_%A_%a   # Standard output and error log
+#SBATCH --partition=secondary,ncsa,eng-research-gpu
+#SBATCH --mem=64G
+#SBATCH --gpus 1
+#SBATCH --cpus-per-task=8
+#SBATCH --array=0-100
+pwd
+hostname
+date
+
+module load anaconda/2022-May/3
+source activate torch
+cd /home/yutao4/leoedge_filters || exit 255
+PYTHONPATH="/home/yutao4/leoedge_filters" python preprocessing/generate_filter_results.py\
+ --array_id $SLURM_ARRAY_TASK_ID --array_size 100\
+  --log_file logs/generate_filter_${SLURM_ARRAY_TASK_ID}.log\
+   --output_folder results/filter_results\
+   --config_file data/all_images "$@"
+
+date

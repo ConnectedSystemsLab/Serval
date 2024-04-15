@@ -1,0 +1,28 @@
+#!/bin/bash
+#SBATCH --job-name=color-curve
+#SBATCH --mail-type=END,FAIL
+#SBATCH --partition=secondary,eng-research
+#SBATCH --time=4:00:00
+#SBATCH --cpus-per-task=5
+#SBATCH --array=0-99
+#SBATCH --output=logs/color-curve-%A_%a.out
+#SBATCH --mem 25G
+
+# Load any necessary modules
+module load anaconda/2022-May/3
+
+# Set up the environment
+source activate torch
+
+# Define the input and output directories
+IMAGE_LIST=data/all_images
+OUTPUT_PATH=data/yolo_images
+
+cd /home/yutao4/leoedge_filters || exit 255
+
+# Run the Python script
+PYTHONPATH=`pwd` python preprocessing/apply_color_curve_for_yolo.py \
+    --image_list $IMAGE_LIST \
+    --output_path $OUTPUT_PATH \
+    --job_array_index $SLURM_ARRAY_TASK_ID \
+    --job_array_size 100

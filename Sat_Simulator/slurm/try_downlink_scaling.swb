@@ -1,0 +1,55 @@
+#!/bin/bash
+#SBATCH --job-name=downlink_scaling
+#SBATCH --output=log/downlink_scaling_%A_%a.out
+#SBATCH --error=log/downlink_scaling_%A_%a.err
+#SBATCH --time=04:00:00
+#SBATCH --mem=100G
+#SBATCH --cpus-per-task=10
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=yutao4@illinois.edu
+#SBATCH --partition=secondary,cs,IllinoisComputes,eng-research
+#SBATCH --array=1-10
+#SBATCH --exclude=ccc0223
+
+module load anaconda/2022-May/3
+source activate satSim
+
+# Define the arrays of file names
+ground_station_files=("data/dgs_config/3G.json" "data/gs_config/3G.json")
+ground_station_log_names=("dgs_3G" "3G")
+energy_config_files=("data/energy_config/default.json")
+energy_config_log_names=("default_energy")
+
+# Define the values for the new argument
+downlink_bandwidth_scalings=(0.4 0.6 0.8 1 1.2)
+
+# Get the length of each array
+num_ground_station_files=${#ground_station_files[@]}
+num_energy_config_files=${#energy_config_files[@]}
+num_downlink_bandwidth_scalings=${#downlink_bandwidth_scalings[@]}
+
+# Calculate the parameters for this job
+ground_station_file=${ground_station_files[$((((SLURM_ARRAY_TASK_ID-1)/(num_energy_config_files*num_downlink_bandwidth_scalings))%num_ground_station_files))]}
+energy_config_file=${energy_config_files[$(((SLURM_ARRAY_TASK_ID-1)%num_energy_config_files))]}
+downlink_bandwidth_scaling=${downlink_bandwidth_scalings[$((((SLURM_ARRAY_TASK_ID-1)/num_energy_config_files)%num_downlink_bandwidth_scalings))]}
+
+ground_log_name=${ground_station_log_names[$((((SLURM_ARRAY_TASK_ID-1)/(num_energy_config_files*num_downlink_bandwidth_scalings))%num_ground_station_files))]}
+energy_log_name=${energy_config_log_names[$(((SLURM_ARRAY_TASK_ID-1)%num_energy_config_files))]}
+
+mkdir -p log/${ground_log_name}/${downlink_bandwidth_scaling}
+# Create a unique log file for this job instance
+log_file="log/${ground_log_name}/${downlink_bandwidth_scaling}__$(date +%Y%m%d-%H%M%S).log"
+
+python_cmd="PYTHONPATH=`pwd` python edgeCompute.py \
+    --satellite_image_mapping_file \"data/sat_mapping.pkl\" \
+    --ground_station_config_file \"$ground_station_file\" \
+    --energy_config_file \"$energy_config_file\" \
+    --priority_bw_allocation 0.01 \
+    --downlink_bandwidth_scaling $downlink_bandwidth_scaling \
+    --logging_file \"$log_file\" $@"
+
+# Print the Python command to be executed
+echo $python_cmd
+
+# Run the Python command with the selected parameters and log to the unique log file
+eval $python_cmd

@@ -1,0 +1,38 @@
+#!/bin/bash
+#SBATCH --job-name=priority_limit_sweep
+#SBATCH --output=log/priority_limit_sweep_%A_%a.out
+#SBATCH --error=log/priority_limit_sweep_%A_%a.err
+#SBATCH --time=04:00:00
+#SBATCH --mem=100G
+#SBATCH --cpus-per-task=10
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=yutao4@illinois.edu
+#SBATCH --partition=secondary,cs,IllinoisComputes,eng-research
+#SBATCH --array=1-4
+#SBATCH --exclude=ccc0223
+
+module load anaconda/2022-May/3
+source activate satSim
+
+bw_limit_values=(0.0001 0.0005 0.001 0.005)
+bw_limit_value=${bw_limit_values[$(((SLURM_ARRAY_TASK_ID-1)%4))]}
+
+mkdir -p log/priority_sweep/
+# Create a unique log file for this job instance
+log_file="log/priority_sweep/${bw_limit_value}.log"
+
+python_cmd="PYTHONPATH=`pwd` python edgeCompute.py \
+    --satellite_image_mapping_file \"data/sat_mapping.pkl\" \
+    --ground_station_config_file \"data/dgs_config/3G.json\" \
+    --energy_config_file \"data/energy_config/30w.json\" \
+    --priority_bw_allocation \"$bw_limit_value\" \
+    --logging_file \"$log_file\" \
+    --filter_config_file \"data/filter_config/30w.json\" \
+    --downlink_bandwidth_scaling \"0.25\" \
+     $@"
+
+# Print the Python command to be executed
+echo $python_cmd
+
+# Run the Python command with the selected parameters and log to the unique log file
+eval $python_cmd

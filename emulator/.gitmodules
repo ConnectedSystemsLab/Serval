@@ -1,0 +1,3 @@
+[submodule "leoedge_filters"]
+	path = leoedge_filters
+	url = git@github.com:ConnectedSystemsLab/leoedge_filters.git

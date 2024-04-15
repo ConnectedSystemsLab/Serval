@@ -1,0 +1,17 @@
+#!/bin/bash
+#SBATCH -p csl
+#SBATCH --time=2-00:00:00
+#SBATCH --cpus-per-task=20
+#SBATCH --ntasks=1
+#SBATCH --job-name=downlink
+#SBATCH --mem-per-cpu=4G
+#SBATCH -e /scratch/ochabra2/jobLogs/%j.err
+#SBATCH -o /scratch/ochabra2/jobLogs/%j.out
+#SBATCH --mail-type=ALL          # Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=ochabra2@illinois.edu     # Where to send mail
+
+source activate satSim
+cd /home/ochabra2/Sat_Simulator
+#python -u endToEnd.py 4 /scratch/ochabra2/downlink/
+python -u endToEnd.py 1 /scratch/ochabra2/downlink/ 4
+wait

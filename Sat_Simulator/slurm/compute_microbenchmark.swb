@@ -1,0 +1,61 @@
+#!/bin/bash
+#SBATCH --job-name=compute
+#SBATCH --output=log/compute_%A_%a.out
+#SBATCH --error=log/compute_%A_%a.err
+#SBATCH --time=04:00:00
+#SBATCH --mem=100G
+#SBATCH --cpus-per-task=10
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=yutao4@illinois.edu
+#SBATCH --partition=secondary,cs,IllinoisComputes,eng-research
+#SBATCH --array=1-12
+#SBATCH --exclude=ccc0223
+
+module load anaconda/2022-May/3
+source activate satSim
+
+# Define the arrays of file names
+ground_station_files=("data/dgs_config/3G.json" "data/gs_config/3G.json")
+ground_station_log_names=("dgs" "normal")
+filter_config_files=("data/filter_config/30w.json" "data/filter_config/fast_compute.json" "data/filter_config/stop_compute.json")
+filter_config_log_names=("default" "fast_compute" "stop_compute")
+
+# Define the values for the new argument
+priority_bw_allocations=(0.01 0.05)
+
+downlink_scaling_factors=(0.25 4)
+
+# Get the length of each array
+num_ground_station_files=${#ground_station_files[@]}
+num_priority_bw_allocations=${#priority_bw_allocations[@]}
+num_filter_config_files=${#filter_config_files[@]}
+
+# Calculate the parameters for this job
+filter_config_file=${filter_config_files[$((((SLURM_ARRAY_TASK_ID - 1) / (num_ground_station_files * num_priority_bw_allocations)) % num_filter_config_files))]}
+ground_station_file=${ground_station_files[$((((SLURM_ARRAY_TASK_ID - 1) / (num_priority_bw_allocations)) % num_ground_station_files))]}
+downlink_scaling_factor=${downlink_scaling_factors[$((((SLURM_ARRAY_TASK_ID - 1) / (num_priority_bw_allocations)) % num_ground_station_files))]}
+priority_bw_allocation=${priority_bw_allocations[$((((SLURM_ARRAY_TASK_ID - 1)) % num_priority_bw_allocations))]}
+
+filter_log_name=${filter_config_log_names[$((((SLURM_ARRAY_TASK_ID - 1) / (num_ground_station_files * num_priority_bw_allocations)) % num_filter_config_files))]}
+ground_log_name=${ground_station_log_names[$((((SLURM_ARRAY_TASK_ID - 1) / num_priority_bw_allocations) % num_ground_station_files))]}
+priority_bw_allocation_log_name=$(echo "$priority_bw_allocation" | tr -d ".")
+
+mkdir -p log/compute/${ground_log_name}_${priority_bw_allocation_log_name}
+# Create a unique log file for this job instance
+log_file="log/compute/${ground_log_name}_${priority_bw_allocation_log_name}/${filter_log_name}__${SLURM_ARRAY_JOB_ID}.log"
+
+python_cmd="PYTHONPATH=$(pwd) python edgeCompute.py \
+    --satellite_image_mapping_file \"data/sat_mapping.pkl\" \
+    --ground_station_config_file \"$ground_station_file\" \
+    --energy_config_file \"data/energy_config/30w.json\" \
+    --priority_bw_allocation $priority_bw_allocation \
+    --logging_file \"$log_file\" \
+    --filter_config_file \"$filter_config_file\" \
+    --downlink_bandwidth_scaling \"$downlink_scaling_factor\" \
+     $@"
+
+# Print the Python command to be executed
+echo $python_cmd
+
+# Run the Python command with the selected parameters and log to the unique log file
+eval $python_cmd

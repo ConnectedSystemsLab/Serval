@@ -1,0 +1,15 @@
+#!/bin/bash
+#SBATCH -p secondary
+#SBATCH --time=4:00:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=30
+#SBATCH --job-name=l2d2
+#SBATCH --mem=50G
+#SBATCH -e slurm-%j.err
+#SBATCH -o slurm-%j.out
+#SBATCH --mail-type=ALL          # Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=ochabra2@illinois.edu     # Where to send mail
+
+source activate satSim
+cd /home/ochabra2/Sat_Simulator
+python main.py 4 "2022-07-09 00:00:00" "2022-07-14 00:00:00"

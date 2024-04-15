@@ -1,0 +1,22 @@
+#!/bin/bash
+#SBATCH -p secondary-eth
+#SBATCH --time=4:00:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=20
+#SBATCH --job-name=logs
+#SBATCH --mem=40G
+#SBATCH -e /scratch/ochabra2/jobLogs/%j.err
+#SBATCH -o /scratch/ochabra2/jobLogs/%j.out
+#SBATCH --mail-type=ALL          # Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=ochabra2@illinois.edu     # Where to send mail
+
+source activate satSim
+cd /home/ochabra2/Sat_Simulator/loggingCode
+#python downlinkrobustness.py PicoNetWithAdaptive OriginalPiconet /scratch/ochabra2/ours-4.log /scratch/ochabra2/ours-2.log 
+python plotUplink.py /scratch/ochabra2/downlink/*
+#python plotLargeDownlink.py /scratch/ochabra2/logs/*
+#python plotNgs.py /scratch/ochabra2/logs/ourDownlink1.log
+#python percentOfPackets.py /scratch/ochabra2/logs/*
+#python uplinkthroughput.py PicoNet Single+L2D2 Aloha+L2D2 /scratch/ochabra2/ours10-.25-.05-.005.log /scratch/ochabra2/single_and_l2d2.log /scratch/ochabra2/aloha_and_l2d2.log
+#python -u downlinkthroughput.py PicoNet Single+L2D2 Aloha+L2D2 /scratch/ochabra2/faster/ours10-.25-.05-.005.log /scratch/ochabra2/faster/single_and_l2d2.log /scratch/ochabra2/faster/aloha_and_l2d2.log
+#python percentOfPackets.py /scratch/ochabra2/faster/*

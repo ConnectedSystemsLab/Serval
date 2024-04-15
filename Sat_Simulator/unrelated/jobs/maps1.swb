@@ -1,0 +1,21 @@
+#!/bin/bash
+
+#let's create a slurm job array with 24 jobs
+#SBATCH --array=1-96
+#SBATCH -p secondary
+#SBATCH --time=4:00:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=20
+#SBATCH --job-name=maps
+#SBATCH --mem=50G
+#SBATCH -e /scratch/ochabra2/jobLogs/%j_%a.err
+#SBATCH -o /scratch/ochabra2/jobLogs/%j_%a.out
+#SBATCH --mail-type=ALL          # Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=ochabra2@illinois.edu
+
+source activate satSim
+cd /home/ochabra2/Sat_Simulator
+#pass the job array variable to the python script
+python -u maps.py $SLURM_ARRAY_TASK_ID
+wait
+

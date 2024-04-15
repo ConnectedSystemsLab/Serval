@@ -1,0 +1,21 @@
+#!/bin/bash
+#SBATCH -p cs,IllinoisComputes,eng-research,secondary
+#SBATCH --time=04:00:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=20
+#SBATCH --job-name=gen_aux_files
+#SBATCH --mem=200G
+#SBATCH --output=log/gen_aux_files_%j.out
+#SBATCH --mail-type=END,FAIL          # Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=yutao4@illinois.edu     # Where to send mail
+#SBATCH --exclude=ccc0223
+
+module load anaconda/2022-May/3
+source activate satSim
+cd /home/yutao4/Sat_Simulator
+echo `which python`
+pwd
+date
+PYTHONPATH=$PYTHONPATH:`pwd` python preprocessing/generate_aux_sat_image_mapping.py\
+  "data/sat_mapping.pkl" "data/sat_mapping_fastcompute.pkl" "data/sat_mapping_stopcompute.pkl" $@
+date
